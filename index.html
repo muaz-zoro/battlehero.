@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🔥 Battle Hero 🔥</title>
+  <style>
+    canvas {
+      background: #111;
+      display: block;
+      margin: 0 auto;
+      border: 3px solid white;
+    }
+    body {
+      background: #000;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔥 Battle Hero 🔫</h1>
+<p id="status">Use arrows to move, SPACE to shoot</p>
+<canvas id="game" width="600" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player = { x: 280, y: 350, w: 40, h: 40, color: "lime" };
+let bullets = [];
+let enemies = [];
+let lives = 3;
+let kills = 0;
+let gameOver = false;
+
+// الحركة
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft" && player.x > 0) player.x -= 20;
+  if (e.key === "ArrowRight" && player.x + player.w < canvas.width) player.x += 20;
+  if (e.key === " " && !gameOver) shoot();
+});
+
+// إطلاق النار
+function shoot() {
+  bullets.push({ x: player.x + 18, y: player.y, w: 5, h: 10, color: "yellow" });
+}
+
+// رسم اللاعب
+function drawPlayer() {
+  ctx.fillStyle = player.color;
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+}
+
+// رسم الرصاص
+function drawBullets() {
+  bullets.forEach((b, i) => {
+    b.y -= 5;
+    ctx.fillStyle = b.color;
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+
+    // إزالة الرصاصة إذا خرجت
+    if (b.y < 0) bullets.splice(i, 1);
+  });
+}
+
+// إنشاء عدو
+function spawnEnemy() {
+  const x = Math.random() * (canvas.width - 30);
+  enemies.push({ x: x, y: 0, w: 30, h: 30, color: "red" });
+}
+
+// رسم الأعداء
+function drawEnemies() {
+  enemies.forEach((e, ei) => {
+    e.y += 2;
+    ctx.fillStyle = e.color;
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+
+    // تصادم مع اللاعب
+    if (
+      e.x < player.x + player.w &&
+      e.x + e.w > player.x &&
+      e.y < player.y + player.h &&
+      e.y + e.h > player.y
+    ) {
+      enemies.splice(ei, 1);
+      lives--;
+      if (lives <= 0) {
+        gameOver = true;
+        document.getElementById("status").innerText = "💀 Game Over!";
+      }
+    }
+
+    // تصادم مع الرصاص
+    bullets.forEach((b, bi) => {
+      if (
+        b.x < e.x + e.w &&
+        b.x + b.w > e.x &&
+        b.y < e.y + e.h &&
+        b.y + b.h > e.y
+      ) {
+        enemies.splice(ei, 1);
+        bullets.splice(bi, 1);
+        kills++;
+        if (kills >= 10) {
+          gameOver = true;
+          document.getElementById("status").innerText = "🏆 YOU WIN!";
+        }
+      }
+    });
+  });
+}
+
+// التحديث والرسم
+function update() {
+  if (gameOver) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawPlayer();
+  drawBullets();
+  drawEnemies();
+
+  // عرض الحالة
+  ctx.fillStyle = "white";
+  ctx.fillText(`Lives: ${lives} | Kills: ${kills}`, 10, 20);
+
+  requestAnimationFrame(update);
+}
+
+// كل ثانيتين يظهر عدو جديد
+setInterval(() => {
+  if (!gameOver) spawnEnemy();
+}, 2000);
+
+update();
+</script>
+
+</body>
+</html>
